@@ -21,6 +21,15 @@ type LoginRequest struct {
 	Signature string `json:"signature"`
 }
 
+func NewLoginData(user string, nonce []byte) (*LoginData, sodium.BoxKP) {
+	eph := sodium.MakeBoxKP()
+	return &LoginData{
+		User:   user,
+		Nonce:  nonce,
+		EphKey: eph.PublicKey.Bytes,
+	}, eph
+}
+
 func (data *LoginData) MakeSigInput() sodium.Bytes {
 	return bytes.Join([][]byte{
 		[]byte(data.User),

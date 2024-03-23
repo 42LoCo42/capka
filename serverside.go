@@ -3,6 +3,8 @@ package capka
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
+	"io"
 	"log"
 	"time"
 
@@ -37,6 +39,15 @@ func GetNonce(length int, age time.Duration) string {
 	return nonce
 }
 
+func DecodeLoginRequestJSON(from io.Reader) (*LoginRequest, error) {
+	req := &LoginRequest{}
+	if err := json.NewDecoder(from).Decode(req); err != nil {
+		return nil, errors.Wrap(err, "could not decode login request JSON")
+	}
+
+	return req, nil
+}
+
 func (req *LoginRequest) Decode(key sodium.SignPublicKey) (*LoginData, error) {
 	nonce, err := base64.StdEncoding.DecodeString(req.Nonce)
 	if err != nil {
@@ -67,4 +78,8 @@ func (req *LoginRequest) Decode(key sodium.SignPublicKey) (*LoginData, error) {
 	}
 
 	return data, nil
+}
+
+func (req *LoginData) Encrypt(data sodium.Bytes) sodium.Bytes {
+	return data.SealedBox(sodium.BoxPublicKey{Bytes: req.EphKey})
 }

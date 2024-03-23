@@ -10,7 +10,7 @@
           default = capka;
           capka = pkgs.buildGoModule {
             pname = "capka";
-            version = "0.1.0";
+            version = "0.2.0";
             src = toSource {
               root = ./.;
               fileset = unions [
@@ -19,9 +19,11 @@
 
                 ./capka.c
                 ./capka.h
-
-                ./capka.go
                 ./capka_test.go
+
+                ./clientside.go
+                ./serverside.go
+                ./utils.go
 
                 ./cmd
               ];

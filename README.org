@@ -70,6 +70,8 @@ doesn't give the attacker any way of injecting their own user
 or obtaining the session ID.
 
 * Implementation goals
+- a Go library for embedding the login logic into an application (DONE)
+
 - serverside:
   - a middleware for [[https://echo.labstack.com/][Echo]]
   - a module for [[https://caddyserver.com/][Caddy]]
@@ -77,7 +79,6 @@ or obtaining the session ID.
 
 - clientside:
   - a JavaScript library for the browser
-  - a Go library for embedding the login logic into an application
   - a CLI tool for quickly generating client pubkeys (DONE)
 
 - everything will be based on [[http://libsodium.org/][libsodium]]:

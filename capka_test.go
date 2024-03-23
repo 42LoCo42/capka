@@ -1,9 +1,8 @@
 package capka
 
 import (
+	"bytes"
 	"encoding/base64"
-	"encoding/json"
-	"log"
 	"reflect"
 	"testing"
 	"time"
@@ -33,20 +32,16 @@ func TestCAPKA(t *testing.T) {
 		t.Fatal(errors.Wrap(err, "could not decode nonce"))
 	}
 
-	eph := sodium.MakeBoxKP()
-
-	dataWant := &LoginData{
-		User:   username,
-		Nonce:  nonce,
-		EphKey: eph.PublicKey.Bytes,
-	}
-
-	req := dataWant.Encode(kp.SecretKey)
-	raw, err := json.Marshal(req)
+	dataWant, eph := NewLoginData(username, nonce)
+	raw, err := dataWant.EncodeJSON(kp.SecretKey)
 	if err != nil {
-		t.Fatal(errors.Wrap(err, "could not encode request as JSON"))
+		t.Fatal(errors.Wrap(err, "could not encode login data"))
 	}
-	log.Print(string(raw))
+
+	req, err := DecodeLoginRequestJSON(bytes.NewReader(raw))
+	if err != nil {
+		t.Fatal(errors.Wrap(err, "could not decode login request JSON"))
+	}
 
 	dataHave, err := req.Decode(kp.PublicKey)
 	if err != nil {
@@ -54,5 +49,16 @@ func TestCAPKA(t *testing.T) {
 	}
 	if !reflect.DeepEqual(dataWant, dataHave) {
 		t.Fatalf("original and decoded login data mismatch:\nwant: %+v\nhave: %+v", dataWant, dataHave)
+	}
+
+	secureDataWant := sodium.Bytes(RandomBytes(32))
+	secureDataHave, err := Decrypt(dataHave.Encrypt(secureDataWant), eph)
+	if err != nil {
+		t.Fatal(errors.Wrap(err, "could not decrypt secure data"))
+	}
+	if !reflect.DeepEqual(secureDataWant, secureDataHave) {
+		t.Fatalf(
+			"original and decrypted secure data mismatch:\nwant: %+v\nhave: %+v",
+			secureDataWant, secureDataHave)
 	}
 }

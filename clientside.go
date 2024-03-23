@@ -5,6 +5,7 @@ package capka
 import "C"
 import (
 	"encoding/base64"
+	"encoding/json"
 	"unsafe"
 
 	"github.com/go-faster/errors"
@@ -56,4 +57,12 @@ func (data *LoginData) Encode(key sodium.SignSecretKey) LoginRequest {
 		EphKey:    base64.StdEncoding.EncodeToString(data.EphKey),
 		Signature: base64.StdEncoding.EncodeToString(data.Sign(key).Bytes),
 	}
+}
+
+func (data *LoginData) EncodeJSON(key sodium.SignSecretKey) ([]byte, error) {
+	return json.Marshal(data.Encode(key))
+}
+
+func Decrypt(data sodium.Bytes, kp sodium.BoxKP) (sodium.Bytes, error) {
+	return data.SealedBoxOpen(kp)
 }
