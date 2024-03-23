@@ -78,7 +78,7 @@ or obtaining the session ID.
 - clientside:
   - a JavaScript library for the browser
   - a Go library for embedding the login logic into an application
-  - a CLI tool for quickly generating client pubkeys
+  - a CLI tool for quickly generating client pubkeys (DONE)
 
 - everything will be based on [[http://libsodium.org/][libsodium]]:
   - https://github.com/jamesruan/sodium

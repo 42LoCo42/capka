@@ -6,21 +6,31 @@
         inherit (pkgs.lib.fileset) toSource unions;
       in
       rec {
-        packages.capka-lib = pkgs.buildGoModule {
-          pname = "capka-lib";
-          version = "0.1.0";
-          src = toSource {
-            root = ./.;
-            fileset = unions [
-              ./go.mod
-              ./go.sum
-              ./lib
-            ];
-          };
+        packages = rec {
+          default = capka;
+          capka = pkgs.buildGoModule {
+            pname = "capka";
+            version = "0.1.0";
+            src = toSource {
+              root = ./.;
+              fileset = unions [
+                ./go.mod
+                ./go.sum
 
-          vendorHash = "sha256-eo9820j+WJehClFpw+iEOZkS4BpDmNd73DlkeoiTEcY=";
-          nativeBuildInputs = with pkgs; [ pkg-config ];
-          buildInputs = with pkgs; [ libsodium ];
+                ./capka.c
+                ./capka.h
+
+                ./capka.go
+                ./capka_test.go
+
+                ./cmd
+              ];
+            };
+
+            vendorHash = "sha256-51wP3ov6rOYnzQmhGr5Hj8j8RQRnB5GB7YoYtcEratk=";
+            nativeBuildInputs = with pkgs; [ pkg-config ];
+            buildInputs = with pkgs; [ libsodium ];
+          };
         };
 
         devShells.default = pkgs.mkShell {

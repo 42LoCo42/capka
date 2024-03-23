@@ -1,4 +1,4 @@
-package lib
+package capka
 
 // #include <sodium.h>
 // #include "capka.h"

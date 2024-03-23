@@ -1,4 +1,4 @@
-package lib
+package capka
 
 import (
 	"encoding/base64"
