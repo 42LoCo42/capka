@@ -2,7 +2,7 @@
 An interesting way of enabling asymmetric cryptography
 without having to carry around certificate or key files.
 
-** The basic protocol
+** The basic protocol (v0)
 1. the client obtains a username & password, e.g. via a login form
 2. from these, it computes a master keypair using the argon2id algorithm:
    #+begin_src go
@@ -41,14 +41,14 @@ without having to carry around certificate or key files.
 5. the server then validates both the nonce (is it still in the active cache?)
    and the signature (user's public keys are stored in the server DB)
 
-** Extension: secure username
+** Extension: secure username (v1)
 In step 4, the =signature= is computed on =user+nonce= instead of just the nonce.
 
-** Extension: simple encrypted return
+** Extension: simple encrypted return (v2)
 In step 5, if the server wants to return some kind of session identifier,
 it encrypts it to the client's public key instead of sending it in plaintext.
 
-** Extension: ephemeral encrypted return
+** Extension: ephemeral encrypted return (v3)
 The previous extension misuses the client's keypair by assigning it two functions:
 signature verification and data encryption.
 Instead, the following changes are made:
