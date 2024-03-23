@@ -4,6 +4,7 @@ package capka
 // #include "capka.h"
 import "C"
 import (
+	"encoding/base64"
 	"unsafe"
 
 	"github.com/go-faster/errors"
@@ -42,4 +43,17 @@ func MakeKP_Ex(username, password, domain []byte, ops, mem C.int) (sodium.SignKP
 	kp.PublicKey = sodium.SignPublicKey{Bytes: pk}
 	kp.SecretKey = sodium.SignSecretKey{Bytes: sk}
 	return kp, nil
+}
+
+func (data *LoginData) Sign(key sodium.SignSecretKey) sodium.Signature {
+	return data.MakeSigInput().SignDetached(key)
+}
+
+func (data *LoginData) Encode(key sodium.SignSecretKey) LoginRequest {
+	return LoginRequest{
+		User:      data.User,
+		Nonce:     base64.StdEncoding.EncodeToString(data.Nonce),
+		EphKey:    base64.StdEncoding.EncodeToString(data.EphKey),
+		Signature: base64.StdEncoding.EncodeToString(data.Sign(key).Bytes),
+	}
 }
