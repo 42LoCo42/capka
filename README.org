@@ -53,7 +53,7 @@ The previous extension misuses the client's keypair by assigning it two function
 signature verification and data encryption.
 Instead, the following changes are made:
 - in step 2, the client also creates a random, ephemeral keypair
-- in step 4, the public key of that keypair is added to the structure
+- in step 4, the public key of that keypair is added to the structure (field =pubkey=)
   and the signature is now computed over all three values (user, nonce, pubkey)
 - in step 5, the server encrypts the session ID to the ephemeral pubkey
   instead of the client master pubkey
@@ -73,7 +73,7 @@ or obtaining the session ID.
 - serverside:
   - a middleware for [[https://echo.labstack.com/][Echo]]
   - a module for [[https://caddyserver.com/][Caddy]]
-  - both of these should have a pluggable user -> pubkey lookup function
+  - both of these should have a pluggable user → pubkey lookup function
 
 - clientside:
   - a JavaScript library for the browser
