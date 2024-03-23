@@ -1,0 +1,85 @@
+* Clientside Argon2 Public-Key Authencation
+An interesting way of enabling asymmetric cryptography
+without having to carry around certificate or key files.
+
+** The basic protocol
+1. the client obtains a username & password, e.g. via a login form
+2. from these, it computes a master keypair using the argon2id algorithm:
+   #+begin_src go
+     // inputs
+     username := "alice"
+     password := "hunter2"
+     domain := "example.org"
+
+     // standard values, set by the crypto library
+     SEEDBYTES := 32 // required by sign_seed_kp
+     SALTBYTES := 16 // required by argon2id
+     OPSLIMIT_INTERACTIVE := 2
+     MEMLIMIT_INTERACTIVE := 67108864 // 64 MiB
+
+     seed := argon2id(
+         SEEDBYTES, // output length
+         password,
+         hash(SALTBYTES, username+domain), // salt
+         OPSLIMIT_INTERACTIVE,
+         MEMLIMIT_INTERACTIVE,
+     )
+     kp := sign_seed_kp(seed)
+   #+end_src
+3. server: exposes a =/capka/login= endpoint
+   - client: GETs the endpoint:
+   - this returns a "nonce" (can be any random string)
+   - server keeps all nones in an "active" cache for a short amount of time (e.g. 5 seconds)
+4. the client POSTs to the same endpoint the following structure:
+   #+begin_src jsonc
+     {
+         "user": "<the given username>",
+         "nonce": "<nonce returned by GET /capka/login>",
+         "signature": "<nonce signed with the master keypair>"
+     }
+   #+end_src
+5. the server then validates both the nonce (is it still in the active cache?)
+   and the signature (user's public keys are stored in the server DB)
+
+** Extension: secure username
+In step 4, the =signature= is computed on =user+nonce= instead of just the nonce.
+
+** Extension: simple encrypted return
+In step 5, if the server wants to return some kind of session identifier,
+it encrypts it to the client's public key instead of sending it in plaintext.
+
+** Extension: ephemeral encrypted return
+The previous extension misuses the client's keypair by assigning it two functions:
+signature verification and data encryption.
+Instead, the following changes are made:
+- in step 2, the client also creates a random, ephemeral keypair
+- in step 4, the public key of that keypair is added to the structure
+  and the signature is now computed over all three values (user, nonce, pubkey)
+- in step 5, the server encrypts the session ID to the ephemeral pubkey
+  instead of the client master pubkey
+
+This version of the protocol *should* be completely secure
+even on untrusted (not HTTPS) channels
+(of course the client can't trust the server under those circumstances).
+
+Attackers can't replace any message or component without triggering
+some kind of validation error on the server.
+And since nonces don't carry intrinsic ownership information,
+even a complete replacement of the nonce with another valid one
+doesn't give the attacker any way of injecting their own user
+or obtaining the session ID.
+
+* Implementation goals
+- serverside:
+  - a middleware for [[https://echo.labstack.com/][Echo]]
+  - a module for [[https://caddyserver.com/][Caddy]]
+  - both of these should have a pluggable user -> pubkey lookup function
+
+- clientside:
+  - a JavaScript library for the browser
+  - a Go library for embedding the login logic into an application
+  - a CLI tool for quickly generating client pubkeys
+
+- everything will be based on [[http://libsodium.org/][libsodium]]:
+  - https://github.com/jamesruan/sodium
+  - https://github.com/jedisct1/libsodium.js
